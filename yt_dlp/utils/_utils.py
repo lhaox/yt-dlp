@@ -1916,6 +1916,7 @@ def fix_xml_ampersands(xml_str):
 
 
 def setproctitle(title):
+    # assert title is str, 'setproctitle requires a string argument'
     assert isinstance(title, str)
 
     # Workaround for https://github.com/yt-dlp/yt-dlp/issues/4541

@@ -95,6 +95,10 @@ def get_urls(urls, batchfile, verbose):
 
 
 def print_extractor_information(opts, urls):
+    """
+    Print information about extractors, such as their names and descriptions.
+    If opts.list_extractors is True, it lists all extractors that can handle the given URLs.
+    """
     out = ''
     if opts.list_extractors:
         # Importing GenericIE is currently slow since it imports YoutubeIE
@@ -755,7 +759,15 @@ ParsedOptions = collections.namedtuple('ParsedOptions', ('parser', 'options', 'u
 
 
 def parse_options(argv=None):
-    """@returns ParsedOptions(parser, opts, urls, ydl_opts)"""
+    """@returns ParsedOptions(parser, opts, urls, ydl_opts)
+
+    - `parse_options(argv)` 负责解析命令行参数，校验和处理各种选项，并生成最终的下载配置。
+    - `parser` 参数解析器对象。
+    - `opts` 包含所有解析后选项的对象。
+    - `all_urls` 是待处理的 URL 列表。
+    - `ydl_opts` 是最终传递给 `YoutubeDL` 实例的配置字典。
+
+    简而言之，这一行是主流程中参数解析和配置初始化的关键步骤。"""
     parser, opts, urls = parseOpts(argv)
     urls = get_urls(urls, opts.batchfile, -1 if opts.quiet and not opts.verbose else opts.verbose)
 
@@ -978,8 +990,16 @@ def parse_options(argv=None):
 
 
 def _real_main(argv=None):
+    # `setproctitle('yt-dlp')` 这行代码的作用是设置当前进程的名称为 `yt-dlp`。
+    # 这样在操作系统的进程管理器（如 Windows 任务管理器、Linux 的 ps/top 命令等）中，可以更直观地看到该进程的名称，便于识别和管理。
+    # 这个功能通常用于命令行工具或守护进程，让用户或管理员更容易找到和区分相关进程。
     setproctitle('yt-dlp')
 
+    # Parse command line options
+    # `parse_options` 函数负责解析命令行参数，并返回一个包含解析结果的元组。
+    # 这个函数会创建一个参数解析器（`parser`），解析用户输入的选项，并生成一个包含所有选项的对象（`opts`）。
+    # 同时，它还会获取待处理的 URL 列表（`all_urls`）和最终传递给 `YoutubeDL` 实例的配置字典（`ydl_opts`）。
+    # 这个步骤是程序的入口点之一，确保所有用户提供的参数都被正确解析和处理。
     parser, opts, all_urls, ydl_opts = parse_options(argv)
 
     # Dump user agent
@@ -1008,6 +1028,11 @@ def _real_main(argv=None):
         if opts.rm_cachedir:
             ydl.cache.remove()
 
+        # `Updater` 类用于检查和执行自我更新操作。如果 `opts.update_self` 为真，则尝试更新当前的 yt-dlp 实例。
+        # 如果更新成功且 `actual_use` 为真，则会重启程序。如果更新失败，则会打印错误信息并设置下载返回码为 100。
+        # 这个功能允许用户在不手动下载新版本的情况下，自动更新 yt-dlp 到最新版本。
+        # 如果更新成功，程序会提示用户重启 yt-dlp 以使用更新后的版本。如果更新失败，程序会打印错误信息并设置下载返回码为 100，以指示发生了错误。
+        # 这个功能允许用户在不手动下载新版本的情况下，自动更新 yt-dlp 到最新版本
         try:
             updater = Updater(ydl, opts.update_self)
             if opts.update_self and updater.update() and actual_use:
@@ -1021,8 +1046,11 @@ def _real_main(argv=None):
             traceback.print_exc()
             ydl._download_retcode = 100
 
-        if opts.list_impersonate_targets:
 
+        if opts.list_impersonate_targets:
+            """
+            该代码片段用于在命令行参数 --list-impersonate-targets 被指定时，输出所有可用的“浏览器伪装”目标及其依赖信息
+            """
             known_targets = [
                 # List of simplified targets we know are supported,
                 # to help users know what dependencies may be required.
@@ -1087,6 +1115,7 @@ def _real_main(argv=None):
                 'You must provide at least one URL.\n'
                 'Type yt-dlp --help to see a list of all options.')
 
+        # 参数解析且验证无误，销毁这个解析器对象以释放资源
         parser.destroy()
         try:
             if opts.load_info_filename is not None:
